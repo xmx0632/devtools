@@ -28,8 +28,6 @@
             <div class="tool-group">
                 <h3>加密/解密</h3>
                 <button class="tool-btn">AES</button>
-                <button class="tool-btn">DES</button>
-                <button class="tool-btn">RSA</button>
             </div>
             <div class="tool-group">
                 <h3>哈希/摘要</h3>
@@ -41,7 +39,7 @@
         
         <div class="main-content">
             <div class="tool-header">
-                <h2>Base64 编码/解码</h2>
+                <h2 class="tool-header"><span class="tool-name">Base64</span><span class="tool-type"> 编码/解码</span></h2>
                 <div class="mode-switch">
                     <button class="mode-btn active">编码</button>
                     <button class="mode-btn">解码</button>
@@ -54,14 +52,25 @@
                     <div class="input-controls">
                         <select class="encoding-select">
                             <option value="UTF-8">UTF-8</option>
-                            <option value="ASCII">ASCII</option>
                             <option value="GBK">GBK</option>
+                            <option value="ASCII">ASCII</option>
                         </select>
-                        <input type="password" class="key-input" placeholder="请输入密钥" style="display: none;">
+                        <select class="digest-length-select" style="display: none;">
+                            <option value="32">32位</option>
+                            <option value="16">16位</option>
+                            <option value="128">128位</option>
+                        </select>
                         <button class="clear-btn">清空</button>
                     </div>
                 </div>
                 <textarea class="input-area" placeholder="请输入要处理的文本..."></textarea>
+                <div id="key-input-container" style="display: none;">
+                    <input type="text" class="key-input" placeholder="请输入密钥">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="use-random-salt" checked>
+                        <label for="use-random-salt">使用随机盐值（更安全，但相同输入会产生不同输出）</label>
+                    </div>
+                </div>
             </div>
             
             <div class="output-section">

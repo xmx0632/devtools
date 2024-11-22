@@ -7,25 +7,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const encodingSelect = document.querySelector('.encoding-select');
     const modeButtons = document.querySelectorAll('.mode-btn');
     const keyInput = document.querySelector('.key-input');
+    const useRandomSaltCheckbox = document.getElementById('use-random-salt');
+    const digestLengthSelect = document.querySelector('.digest-length-select');
 
     // 工具选择
+    let currentTool;
     toolButtons.forEach(button => {
         button.addEventListener('click', () => {
             toolButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
-            const isDigest = ['MD5', 'SHA1', 'SHA256'].includes(button.textContent);
-            toolHeader.textContent = button.textContent + (isDigest ? ' 摘要' : ' 编码/解码');
+            currentTool = button.textContent;
+
+            // 更新工具标题
+            const toolName = document.querySelector('.tool-name');
+            const toolType = document.querySelector('.tool-type');
+            const isDigest = ['MD5', 'SHA1', 'SHA256'].includes(currentTool);
             
-            // 显示/隐藏密钥输入框
-            keyInput.style.display = button.textContent === 'AES' ? 'inline-block' : 'none';
-            
+            toolName.textContent = currentTool;
+            toolType.textContent = isDigest ? ' 摘要' : ' 编码/解码';
+
+            // 显示或隐藏密钥输入
+            const keyInputContainer = document.getElementById('key-input-container');
+            if (currentTool === 'AES') {
+                keyInputContainer.style.display = 'block';
+            } else {
+                keyInputContainer.style.display = 'none';
+            }
+
             // 更新编码选择框的显示
-            encodingSelect.style.display = ['Base64', 'Unicode'].includes(button.textContent) ? 'inline-block' : 'none';
-            
+            encodingSelect.style.display = ['Base64', 'Unicode'].includes(currentTool) ? 'inline-block' : 'none';
+
+            // 更新摘要长度选择框的显示
+            digestLengthSelect.style.display = currentTool === 'MD5' ? 'inline-block' : 'none';
+
             // 对于摘要算法，隐藏模式切换按钮
             const modeSwitch = document.querySelector('.mode-switch');
             modeSwitch.style.display = isDigest ? 'none' : 'flex';
-            
+
             processInput();
         });
     });
@@ -42,6 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 输入变化时处理
     inputArea.addEventListener('input', () => processInput());
     encodingSelect.addEventListener('change', () => processInput());
+    useRandomSaltCheckbox.addEventListener('change', () => processInput());
+    digestLengthSelect.addEventListener('change', () => processInput());
 
     // 处理输入
     async function processInput() {
@@ -68,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (tool === 'AES') {
                 result = await handleAES(input, mode, keyInput.value);
             } else if (tool === 'MD5') {
-                result = await handleDigest(input, 'SHA-256'); // 使用 SHA-256 代替 MD5
+                result = await handleMD5(input);
             } else if (tool === 'SHA1') {
                 result = await handleDigest(input, 'SHA-1');
             } else if (tool === 'SHA256') {
@@ -215,34 +235,49 @@ document.addEventListener('DOMContentLoaded', () => {
             throw new Error('请输入密钥');
         }
 
+        const useRandomSalt = useRandomSaltCheckbox.checked;
+
         try {
+            let salt, iv;
+            
+            if (useRandomSalt) {
+                // 使用随机盐值和 IV（更安全）
+                salt = crypto.getRandomValues(new Uint8Array(16));
+                iv = crypto.getRandomValues(new Uint8Array(12));
+            } else {
+                // 使用确定性盐值和 IV（相同输入产生相同输出）
+                const keyBuffer = new TextEncoder().encode(key);
+                const saltBuffer = await crypto.subtle.digest('SHA-256', keyBuffer);
+                salt = new Uint8Array(saltBuffer).slice(0, 16);
+                
+                const combinedBuffer = new TextEncoder().encode(key + input);
+                const ivBuffer = await crypto.subtle.digest('SHA-256', combinedBuffer);
+                iv = new Uint8Array(ivBuffer).slice(0, 12);
+            }
+
+            // 从密钥生成加密密钥
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw',
+                new TextEncoder().encode(key),
+                { name: 'PBKDF2' },
+                false,
+                ['deriveBits', 'deriveKey']
+            );
+
+            const cryptoKey = await crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: 100000,
+                    hash: 'SHA-256'
+                },
+                keyMaterial,
+                { name: 'AES-GCM', length: 256 },
+                false,
+                [mode === '编码' ? 'encrypt' : 'decrypt']
+            );
+
             if (mode === '编码') {
-                // 生成随机盐值和 IV
-                const salt = crypto.getRandomValues(new Uint8Array(16));
-                const iv = crypto.getRandomValues(new Uint8Array(12));
-
-                // 从密钥生成加密密钥
-                const keyMaterial = await crypto.subtle.importKey(
-                    'raw',
-                    new TextEncoder().encode(key),
-                    { name: 'PBKDF2' },
-                    false,
-                    ['deriveBits', 'deriveKey']
-                );
-
-                const cryptoKey = await crypto.subtle.deriveKey(
-                    {
-                        name: 'PBKDF2',
-                        salt: salt,
-                        iterations: 100000,
-                        hash: 'SHA-256'
-                    },
-                    keyMaterial,
-                    { name: 'AES-GCM', length: 256 },
-                    false,
-                    ['encrypt']
-                );
-
                 // 加密数据
                 const encryptedData = await crypto.subtle.encrypt(
                     { name: 'AES-GCM', iv: iv },
@@ -270,28 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const iv = encryptedArray.slice(16, 28);
                     const encryptedData = encryptedArray.slice(28);
 
-                    // 从密钥生成解密密钥
-                    const keyMaterial = await crypto.subtle.importKey(
-                        'raw',
-                        new TextEncoder().encode(key),
-                        { name: 'PBKDF2' },
-                        false,
-                        ['deriveBits', 'deriveKey']
-                    );
-
-                    const cryptoKey = await crypto.subtle.deriveKey(
-                        {
-                            name: 'PBKDF2',
-                            salt: salt,
-                            iterations: 100000,
-                            hash: 'SHA-256'
-                        },
-                        keyMaterial,
-                        { name: 'AES-GCM', length: 256 },
-                        false,
-                        ['decrypt']
-                    );
-
                     // 解密
                     const decryptedData = await crypto.subtle.decrypt(
                         { name: 'AES-GCM', iv: iv },
@@ -310,6 +323,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw e;
             }
             throw new Error('AES 处理失败：' + e.message);
+        }
+    }
+
+    // MD5 处理
+    async function handleMD5(input) {
+        try {
+            const digestLength = digestLengthSelect.value;
+            const msgUint8 = new TextEncoder().encode(input);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            
+            // 根据选择的长度返回不同长度的摘要
+            switch (digestLength) {
+                case '16':
+                    return hashHex.slice(8, 24); // 16位
+                case '128':
+                    return hashHex.split('').map(char => char.charCodeAt(0).toString(2).padStart(8, '0')).join(''); // 128位二进制
+                default:
+                    return hashHex.slice(0, 32); // 32位
+            }
+        } catch (e) {
+            throw new Error('MD5 处理失败：' + e.message);
         }
     }
 
