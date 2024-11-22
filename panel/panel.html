@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="window-size" content="width=800,height=600">
+    <title>DevTools</title>
+    <link rel="stylesheet" href="panel.css">
+    <style>
+        body {
+            min-width: 800px;
+            min-height: 600px;
+            width: 800px;
+            height: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="tool-group">
+                <h3>编码/解码</h3>
+                <button class="tool-btn active">Base64</button>
+                <button class="tool-btn">URL</button>
+                <button class="tool-btn">Unicode</button>
+                <button class="tool-btn">HTML</button>
+            </div>
+            <div class="tool-group">
+                <h3>加密/解密</h3>
+                <button class="tool-btn">AES</button>
+                <button class="tool-btn">DES</button>
+                <button class="tool-btn">RSA</button>
+            </div>
+            <div class="tool-group">
+                <h3>哈希/摘要</h3>
+                <button class="tool-btn">MD5</button>
+                <button class="tool-btn">SHA1</button>
+                <button class="tool-btn">SHA256</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="tool-header">
+                <h2>Base64 编码/解码</h2>
+                <div class="mode-switch">
+                    <button class="mode-btn active">编码</button>
+                    <button class="mode-btn">解码</button>
+                </div>
+            </div>
+            
+            <div class="input-section">
+                <div class="input-header">
+                    <span>输入</span>
+                    <div class="input-controls">
+                        <select class="encoding-select">
+                            <option value="UTF-8">UTF-8</option>
+                            <option value="ASCII">ASCII</option>
+                            <option value="GBK">GBK</option>
+                        </select>
+                        <input type="password" class="key-input" placeholder="请输入密钥" style="display: none;">
+                        <button class="clear-btn">清空</button>
+                    </div>
+                </div>
+                <textarea class="input-area" placeholder="请输入要处理的文本..."></textarea>
+            </div>
+            
+            <div class="output-section">
+                <div class="output-header">
+                    <span>输出</span>
+                    <button class="copy-btn">复制</button>
+                </div>
+                <textarea class="output-area" readonly></textarea>
+            </div>
+        </div>
+    </div>
+    <script src="panel.js"></script>
+</body>
+</html>

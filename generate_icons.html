@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Icons</title>
+</head>
+<body>
+    <canvas id="canvas16" width="16" height="16"></canvas>
+    <canvas id="canvas48" width="48" height="48"></canvas>
+    <canvas id="canvas128" width="128" height="128"></canvas>
+    <div id="downloads"></div>
+
+    <script>
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            
+            // Set background color
+            ctx.fillStyle = '#4A90E2';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Calculate font size (approximately 70% of the icon size)
+            const fontSize = Math.floor(size * 0.7);
+            
+            // Set text style
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Draw the 'D'
+            ctx.fillText('D', size/2, size/2);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.download = `icon${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.textContent = `Download ${size}x${size} icon`;
+            link.style.display = 'block';
+            document.getElementById('downloads').appendChild(link);
+            
+            // Automatically trigger download
+            link.click();
+        }
+
+        // Generate all icons
+        drawIcon(document.getElementById('canvas16'), 16);
+        drawIcon(document.getElementById('canvas48'), 48);
+        drawIcon(document.getElementById('canvas128'), 128);
+    </script>
+</body>
+</html>
