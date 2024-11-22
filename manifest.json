@@ -19,5 +19,8 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": ["storage", "windows"]
+  "permissions": [
+    "storage",
+    "clipboardWrite"
+  ]
 }
