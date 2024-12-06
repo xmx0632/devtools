@@ -12,6 +12,7 @@ mkdir -p $BUILD_DIR $DIST_DIR
 
 # 复制文件到构建目录
 cp manifest.json $BUILD_DIR/
+cp background.js $BUILD_DIR/
 cp -r panel $BUILD_DIR/
 cp -r icons $BUILD_DIR/
 
